@@ -1,0 +1,35 @@
+#!/usr/bin/env python3
+import os
+import sys
+import shutil
+import re
+import glob
+
+#获取当前文件夹路径
+curPath = sys.argv[0].replace('run','')
+# 旧资源路径
+old_res_path = curPath + "old_res/"
+# 新资源路径
+new_res_path = curPath + "new_res/"
+# 重命名为...
+reName = "test_{index}.png"
+
+# 清空输出目录
+
+if os.path.exists(new_res_path):
+    shutil.rmtree(new_res_path)
+os.makedirs(new_res_path)
+
+# 获取.png文件列表
+fileList = glob.glob(old_res_path + '*.png')
+# 拷贝+重命名
+fileCnt = 0
+for srcName in fileList:
+    # 提取数字
+    number = int(re.sub("\D", "", srcName))
+    newName = reName.format(index = number)
+    dstName = os.path.join(new_res_path, newName)
+    print(dstName)
+    shutil.copy(srcName, dstName)
+    fileCnt = fileCnt + 1
+print("重命名数量:" + str(fileCnt))

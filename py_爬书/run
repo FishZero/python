@@ -1,0 +1,85 @@
+#!/usr/bin/env python3
+#-*- coding:UTF-8 -*-
+import os
+import sys
+import requests
+from bs4 import BeautifulSoup
+
+class downLoader(object):
+    def __init__(self):
+        #网站url
+        self.server = 'https://www.biqukan.com/'
+        #book_url 具体小说url  txtName 小说名  continueCnt 过滤章节数  urlList 具体章节url  nameList 章节名  savePath 文本保存路径
+        self.targets = [{'book_url':'https://www.biqukan.com/0_790/','txtName':'','continueCnt':12,'urlList':[],'nameList':[],'savePath':''},
+                        {'book_url':'http://www.biqukan.com/1_1094/','txtName':'','continueCnt':12,'urlList':[],'nameList':[],'savePath':''},
+                        {'book_url':'https://www.biqukan.com/38_38836/','txtName':'','continueCnt':12,'urlList':[],'nameList':[],'savePath':''},]
+    
+    #填充数据
+    def getTargetsInfo(self):
+        for item in self.targets:
+            req = requests.get(url = item['book_url'])
+            req.encoding = 'GBK'
+            html = req.text
+            bf = BeautifulSoup(html,'html.parser')
+            div = bf.find_all('div',class_ = 'listmain')
+            a_bf = BeautifulSoup(str(div[0]),'html.parser')
+            a = a_bf.find_all('a')
+            for each in a[item['continueCnt']:]:
+                # 获取章节名
+                item['nameList'].append(each.string)
+                # 获取章节列表url 
+                item['urlList'].append(self.server + each.get('href'))
+            #获取小说名
+            h2 = bf.find_all('h2')
+            item['txtName'] = h2[0].text
+            #获取文本保存路径
+            item['saveFilePath'] = sys.argv[0].replace('run','') + item['txtName'] + '.txt'
+
+
+    # 下载一本书
+    def downLoaderBook(self,index):
+        item = self.targets[index]
+        num = len(item['urlList'])
+        print('开始下载:' + item['txtName'])
+        if os.path.isfile(item['saveFilePath']):
+           os.remove(item['saveFilePath'])
+        for curIndex in range(num):
+            # 下载一章节内容
+            req = requests.get(item['urlList'][curIndex])
+            req.encoding = 'GBK'
+            html = req.text
+            bf = BeautifulSoup(html,'html.parser')
+            div = bf.find_all('div',class_ = 'showtxt')
+            text = div[0].text.replace('\xa0' * 8, '\n\n')
+            self.saveTextToFile(item['nameList'][curIndex],item['saveFilePath'],text)
+            sys.stdout.write('下载进度:%.3f%%' % float((curIndex + 1) / num * 100) + '\r')
+            sys.stdout.flush()
+        print('\n' + '下载完成:' + item['txtName'])
+       
+
+    # 写入文本 保存
+    def saveTextToFile(self,name,path,text):
+        with open(path, 'a', encoding = 'utf-8')as f:
+            f.write(name + '\n')
+            f.writelines(text)
+            f.write('\n\n')
+    
+
+    #开启下载
+    def startDownLoader(self):
+        bookCnt = len(self.targets)
+        print('启动')
+        for index in range(bookCnt):
+            self.downLoaderBook(index)
+            print('总进度:%.3f%%' % float((index + 1) / bookCnt * 100))
+        print('结束')
+        
+        
+
+if __name__ == '__main__':
+    dl = downLoader()
+    dl.getTargetsInfo()
+    dl.startDownLoader()
+   
+    
+    

@@ -1,0 +1,14 @@
+#!/usr/bin/env python3
+import sys
+
+#证书名.keystore
+keystoreFileName = '1.keystore'
+#证书别名
+keystoreAlias = '1'
+#存储路径
+keystoreOutPath = sys.argv[0].replace('run','') + keystoreFileName
+#生成命令
+command = 'keytool -genkey -v -keystore {FileName} -alias {alias} -keyalg RSA -validity 20000 -keystore  {outFile}'.format(FileName = keystoreFileName,alias = keystoreAlias,outFile = keystoreOutPath)
+print('生成命令:' + command)
+
+

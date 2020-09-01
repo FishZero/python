@@ -1,0 +1,6 @@
+# 功能:重签apk
+1.将需重签apk放入src目录下
+2.将keystore文件放入keystore目录下
+3.在run脚本中配置keystore的Alias,password
+4.运行run脚本
+5.重签后的apk输出到dst目录下

@@ -1,0 +1,42 @@
+#!/usr/bin/env python3
+import os
+import sys
+import shutil
+
+#当前路径
+curPath = sys.argv[0].replace('run','')
+#拷贝源路径
+srcPath = curPath + 'src'
+#拷贝目标路径
+dstPath = curPath + 'dst'
+#设备号是否连续
+isContinuous = False 
+
+#获取要生成的设备号文件夹名
+devices = []
+if isContinuous:
+    devices = list(range(2060 ,2066 + 1))
+else:
+    devices = ['1dfdfdf']
+
+#获取源文件夹名
+mainFolderName = ""
+for name in os.listdir(srcPath):
+    mainFolderName = name
+    break
+
+#清空输出目录
+if os.path.exists(dstPath):
+    shutil.rmtree(dstPath)
+
+#拷贝文件夹 重命名
+_src = os.path.join(srcPath, mainFolderName)
+for device in devices:
+    newFileDirName = device
+    if type(newFileDirName) is int:
+        newFileDirName = str(newFileDirName)
+    _dst = os.path.join(dstPath,newFileDirName)
+    shutil.copytree(_src,_dst)
+
+print(devices)
+print("拷贝生成数量：" + str(len(devices)))

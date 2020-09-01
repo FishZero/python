@@ -1,0 +1,55 @@
+#!/usr/bin/env python3
+import re
+import os
+import sys
+import glob
+import imageio
+
+def create_gif(image_list, gif_name, duration=0.35):
+    print("生成gif:")
+    print(gif_name)
+    frames = []
+    for image_name in image_list:
+        frames.append(imageio.imread(image_name))
+    imageio.mimsave(gif_name, frames, 'GIF', duration=duration)
+    return
+
+
+def main():
+    #获取当前路径文件夹
+    curPath = sys.argv[0].replace('run','')
+    #获取gif散图目录名
+    gifDirArray = []
+    for fileName in os.walk(curPath):
+        if os.path.isdir(fileName[0]) and fileName[0] != curPath:
+            gifDirArray.append(fileName[0])
+    print(gifDirArray)
+    for gifDir in gifDirArray:
+        fileArray = glob.glob(gifDir + "/" + '*.png')
+        #获取gif散图名
+        image_list = [''] * len(fileArray)
+
+        indexArray = []
+        for imageName in fileArray:
+            number = int(re.sub("\D", "", imageName))
+            indexArray.append(number)
+        indexArray.sort()
+        minValue = indexArray[0]
+
+        for imageName in fileArray:
+            number = int(re.sub("\D", "", imageName))
+            if minValue == 1 :
+                image_list[number - 1] = imageName
+            elif minValue == 0:
+                image_list[number] = imageName
+            else:
+                assert(False)
+        
+        gif_name = gifDir + '.gif'
+        #gif散图切换间隔
+        duration = 0.1
+
+        create_gif(image_list, gif_name, duration)
+
+if __name__ == '__main__':
+    main()

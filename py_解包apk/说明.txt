@@ -1,0 +1,5 @@
+# 功能:解包
+# 操作
+1.将需要解包apk文件放到shell_unpack同级目录下
+2.运行shell_unpack脚本
+3.解包成功输出目录为shell_unpack同级目录

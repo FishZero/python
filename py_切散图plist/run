@@ -1,0 +1,128 @@
+#!/usr/bin/env python3
+import os
+import sys
+import glob
+from PIL import Image
+from xml.etree import ElementTree
+
+def tree_to_dict(tree):
+    d = {}
+    for index, item in enumerate(tree):
+        if item.tag == 'key':
+            if tree[index+1].tag == 'string':
+                d[item.text] = tree[index + 1].text
+            elif tree[index + 1].tag == 'true':
+                d[item.text] = True
+            elif tree[index + 1].tag == 'false':
+                d[item.text] = False
+            elif tree[index + 1].tag == 'integer':
+                d[item.text] = int(tree[index + 1].text)
+            elif tree[index+1].tag == 'dict':
+                d[item.text] = tree_to_dict(tree[index+1])
+
+    return d
+
+
+def read_rect(dict):
+    return [dict['x'], dict['y'], dict['width'], dict['height']]
+
+
+def gen_png_from_plist(plist_filename, png_filename):
+    file_path = plist_filename.replace('.plist', '')
+    big_image = Image.open(png_filename)
+    root = ElementTree.fromstring(open(plist_filename, 'r').read())
+    plist_dict = tree_to_dict(root[0])
+    def to_list(x): return x.replace('{', '').replace('}', '').split(',')
+    outFileNames = [] 
+    splitCnt = 0
+    for k, v in plist_dict['frames'].items():
+        if 'textureRect' in v:
+            rectlist = to_list(v['textureRect'])
+        elif 'frame' in v:
+            rectlist = to_list(v['frame'])
+        else:
+            rectlist = read_rect(v)
+
+        if 'rotated' in v:
+            width = int(rectlist[3] if v['rotated'] else rectlist[2])
+            height = int(rectlist[2] if v['rotated'] else rectlist[3])
+        else:
+            width = int(rectlist[2])
+            height = int(rectlist[3])
+        box = (
+            int(rectlist[0]),
+            int(rectlist[1]),
+            int(rectlist[0]) + width,
+            int(rectlist[1]) + height,
+        )
+
+        if 'spriteSize' in v:
+            spriteSize = v['spriteSize']
+        elif 'sourceSize' in v:
+            spriteSize = v['sourceSize']
+        elif "width" in v:
+            spriteSize = str(v['width']) + ',' + str(v['height'])
+        sizelist = [int(x) for x in to_list(spriteSize)]
+        # print sizelist
+        rect_on_big = big_image.crop(box)
+       
+        if ('textureRotated' in v and v['textureRotated']) or ('rotated' in v and v['rotated']):
+            rect_on_big = rect_on_big.transpose(Image.ROTATE_90)
+
+        result_image = Image.new('RGBA', sizelist, (0, 0, 0, 0))
+
+        if ('textureRotated' in v and v['textureRotated']) or ('rotated' in v and v['rotated']):
+            result_box = (
+                int((sizelist[0] - height)/2),
+                int((sizelist[1] - width)/2),
+                int((sizelist[0] + height)/2),
+                int((sizelist[1] + width)/2)
+            )
+        else:
+            result_box = (
+                int((sizelist[0] - width)/2),
+                int((sizelist[1] - height)/2),
+                int((sizelist[0] + width)/2),
+                int((sizelist[1] + height)/2)
+            )
+        result_image.paste(rect_on_big, result_box, mask=0)
+
+        if not os.path.isdir(file_path):
+            os.mkdir(file_path)
+        k = k.replace('/', '_')
+        outfile = (file_path+'/' + k).replace('gift_', '')
+        # print k
+        if outfile.find('.png') == -1:
+            outfile = outfile + '.png'
+
+        result_image.save(outfile)
+
+        outFileNames.append(outfile)
+        splitCnt = splitCnt + 1
+
+    print("合图文件名:")
+    print(plist_filename)
+    print(png_filename)
+    print("切割散图总数:" + str(splitCnt))
+    for fileName in outFileNames:
+        print (fileName)
+   
+
+if __name__ == '__main__':
+    #获取当前路径合图文件
+    curPath = sys.argv[0].replace('run','')
+    fileNameArray = []
+    for fileName in glob.glob(curPath + '*.plist'):
+        fileNameArray.append(fileName.replace('.plist',''))
+    #遍历 拆分合图
+    for fileName in fileNameArray:  
+        plist_filename = fileName + '.plist'
+        png_filename = fileName + '.png'
+        if (os.path.exists(plist_filename) and os.path.exists(png_filename)):
+            gen_png_from_plist(plist_filename, png_filename)
+        else:
+            print("缺少plist或png文件")
+            print(plist_filename)
+            print(png_filename)
+            assert(False)
+    print("拆分合图数量:",len(fileNameArray))

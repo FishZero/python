@@ -1,0 +1,41 @@
+#!/usr/bin/env python3
+import sys
+import glob
+import subprocess
+
+# jarsigner -verbose -keystore 密钥库位置 -signedjar 签名后的apk 签名前的apk 别名
+# 例如：
+# 要对vivo_unsign.apk 文件签名 希望签名后的文件名为 vivo_sign.apk
+ 
+# 密匙库文件为  d:\keystore\vivo_key.keystore
+# 签名后的apk  d:\vivo_sign.apk 
+# 签名前的apk  d:\vivo_unsign.apk
+# 别名(Alias) vivo
+ 
+# 那么签名的命令为:
+# jarsigner -verbose -keystore d:\keystore\vivo_key.keystore -signedjar d:\vivo_sign.apk d:\vivo_unsign.apk  vivo
+
+#获取当前路径文件夹
+curPath = sys.argv[0].replace('run','')
+#keystore路径
+keyStorePath = (glob.glob(curPath + 'keystore/' + '*')[0])
+#keystore Alias（需要配置）
+alias = 'swmj'
+#keystore password （需要配置）
+password = 'shunwo123456' + '\n'
+#签名前的apk
+srcApkPath = (glob.glob(curPath + 'src/' + '*')[0])
+#签名后的apk  
+dstApkpath = curPath + 'dst/' + 'sign.apk'
+#生成命令
+command = 'jarsigner -verbose -keystore {keyFile} -signedjar {dstApk} {srcApk}  {aliasStr}'.format(keyFile = keyStorePath,dstApk = dstApkpath,srcApk = srcApkPath,aliasStr = alias)
+print('执行命令:' + command)
+process = subprocess.Popen(command,shell = True,stdin = subprocess.PIPE,stdout = subprocess.PIPE)
+(stdout, stderr) = process.communicate(password.encode())
+if stdout:
+    print(str(stdout,'utf-8'))
+    print('执行成功')
+if stderr:
+    print(str(stderr,'utf-8'))
+    print('执行失败')
+

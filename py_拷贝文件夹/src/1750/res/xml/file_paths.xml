@@ -1,0 +1,7 @@
+<resources xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <paths>
+        <external-path name="apk" path="/apk_2_update/" />
+    </paths>
+
+</resources>
